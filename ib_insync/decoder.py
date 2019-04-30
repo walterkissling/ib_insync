@@ -526,7 +526,7 @@ class Decoder:
     def positionMulti(self, fields):
         c = Contract()
         (
-            _, _,
+            _, #_,
             reqId,
             orderId,
             account,
