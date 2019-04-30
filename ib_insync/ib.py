@@ -326,7 +326,7 @@ class IB:
         """
         return list(self.wrapper.accounts)
 
-    def accountValues(self, account: str = '') -> List[AccountValue]:
+    def accountValues(self, account: str = '', modelCode: str = '') -> List[AccountValue]:
         """
         List of account values for the given account,
         or of all accounts if account is left blank.
@@ -337,6 +337,9 @@ class IB:
         if account:
             return [v for v in self.wrapper.accountValues.values()
                     if v.account == account]
+        if modelCode:
+            return [v for v in self.wrapper.accountValues.values()
+                    if v.modelCode == modelCode]
         else:
             return list(self.wrapper.accountValues.values())
 
