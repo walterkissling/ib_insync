@@ -380,6 +380,17 @@ class IB:
             return [v for d in self.wrapper.positions.values()
                     for v in d.values()]
 
+    def positionsModel(self, modelCode: str='') -> List[Position]:
+        """
+        List of positions for the given account,
+        or of all accounts if account is left blank.
+        """
+        if modelCode:
+            return list(self.wrapper.positionsModel[modelCode].values())
+        else:
+            return [v for d in self.wrapper.positionsModel.values()
+                    for v in d.values()]
+
     def pnl(self, account='', modelCode='') -> List[PnL]:
         """
         List of subscribed :class:`.PnL` objects (profit and loss),
@@ -765,15 +776,6 @@ class IB:
         """
         return self._run(self.reqAllOpenOrdersAsync())
 
-    def reqCompletedOrders(self, apiOnly: bool) -> List[Trade]:
-        """
-        Request and return a list of completed trades.
-
-        Args:
-            apiOnly: Request only API orders (not manually placed TWS orders).
-        """
-        return self._run(self.reqCompletedOrdersAsync(apiOnly))
-
     def reqExecutions(
             self, execFilter: ExecutionFilter = None) -> List[Fill]:
         """
@@ -798,6 +800,16 @@ class IB:
         This method is blocking.
         """
         return self._run(self.reqPositionsAsync())
+
+    def reqPositionsModel(self, modelCode, account='All') -> List[Position]:
+        """
+        It is recommended to use :py:meth:`.positionsModel` instead.
+
+        Request and return a list of positions for selected model and account.
+
+        This method is blocking.
+        """
+        return self._run(self.reqPositionsModelAsync(modelCode, account))
 
     def reqPnL(self, account: str, modelCode: str = '') -> PnL:
         """
@@ -1689,11 +1701,6 @@ class IB:
         self.client.reqAllOpenOrders()
         return future
 
-    def reqCompletedOrdersAsync(self, apiOnly):
-        future = self.wrapper.startReq('completedOrders')
-        self.client.reqCompletedOrders(apiOnly)
-        return future
-
     def reqExecutionsAsync(self, execFilter=None):
         execFilter = execFilter or ExecutionFilter()
         reqId = self.client.getReqId()
@@ -1704,6 +1711,12 @@ class IB:
     def reqPositionsAsync(self):
         future = self.wrapper.startReq('positions')
         self.client.reqPositions()
+        return future
+
+    def reqPositionsModelAsync(self, modelCode, account):
+        reqId = self.client.getReqId()
+        future = self.wrapper.startReq(reqId)
+        self.client.reqPositionsMulti(reqId, account, modelCode)
         return future
 
     def reqContractDetailsAsync(self, contract):

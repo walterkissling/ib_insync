@@ -35,6 +35,7 @@ class Wrapper:
         self.acctSummary = {}  # (account, tag, currency) -> AccountValue
         self.portfolio = defaultdict(dict)  # account -> conId -> PortfolioItem
         self.positions = defaultdict(dict)  # account -> conId -> Position
+        self.positionsModel = defaultdict(dict)  # account -> conId -> Position
         self.trades = {}  # (client, orderId) or permId -> Trade
         self.fills = {}  # execId -> Fill
         self.newsTicks = []  # list of NewsTick
@@ -243,6 +244,23 @@ class Wrapper:
     def positionEnd(self):
         self._endReq('positions')
 
+    def positionMulti(self, reqId, account, modelCode, contract, posSize, avgCost):
+        contract = Contract.create(**contract.dict())
+        position = Position(account, contract, posSize, avgCost)
+        positionsModel = self.positionsModel[modelCode]
+        if posSize == 0:
+            positionsModel.pop(contract.conId, None)
+        else:
+            positionsModel[contract.conId] = position
+        self._logger.info(f'position: {position}')
+        results = self._results.get('positionsModel')
+        if results is not None:
+            results.append(position)
+        self.ib.positionEvent.emit(position)
+
+    def positionMultiEnd(self, reqId):
+        self._endReq(reqId)
+
     def pnl(self, reqId, dailyPnL, unrealizedPnL, realizedPnL):
         pnl = self.pnls.get(reqId)
         if not pnl:
@@ -300,15 +318,6 @@ class Wrapper:
 
     def openOrderEnd(self):
         self._endReq('openOrders')
-
-    def completedOrder(self, contract, order, orderState):
-        contract = Contract.create(**contract.dict())
-        orderStatus = OrderStatus(status=orderState.status)
-        self._results['completedOrders'].append(
-            Trade(contract, order, orderStatus, [], []))
-
-    def completedOrdersEnd(self):
-        self._endReq('completedOrders')
 
     def orderStatus(
             self, orderId, status, filled, remaining, avgFillPrice,
