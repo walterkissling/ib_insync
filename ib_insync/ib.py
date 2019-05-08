@@ -333,6 +333,7 @@ class IB:
 
         Args:
             account: If specified, filter for this account name.
+            modelCode: If specified, filter for this model name.
         """
         if account:
             return [v for v in self.wrapper.accountValues.values()
